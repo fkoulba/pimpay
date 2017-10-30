@@ -26,7 +26,7 @@ class CurrencyValue {
   }
 
   public function describe() {
-    return $this->code . '(' . $this->amount . ')';
+    return $this->amount . $this->code;
   }
 
   public function collapse() {
@@ -66,7 +66,24 @@ class Expression {
   }
 
   public function describe() {
-    return $this->value1 . '->' . $this->operation . '(' . $this->value2 . ')';
+    switch ($this->operation) {
+    case 'add':
+      $description = $this->value1 . ' + ' . $this->value2;
+      break;
+    case 'sub':
+      $description = $this->value1 . ' - ' . $this->value2;
+      break;
+    case 'mul':
+      $description = '(' . $this->value1 . ') * ' . $this->value2;
+      break;
+    case 'div':
+      $description = '(' . $this->value1 . ') / ' . $this->value2;
+      break;
+    default:
+      throw new Exception('Неизвестная операция "' . $this->operation . '"');
+    }
+
+    return $description;
   }
 
   public function collapse() {
@@ -107,6 +124,8 @@ class Expression {
         $collapsedResult[$code] /= $this->value2;
       }
       break;
+    default:
+      throw new Exception('Неизвестная операция "' . $this->operation . '"');
     }
 
     return $collapsedResult;
@@ -141,6 +160,6 @@ function USD($value) {
 $expr = (RUB(10)->mul(5)->add(USD(5))->sub(RUB(3)))->mul(2);
 // $expr = RUB(10)->mul(5)->add(USD(5))->sub(RUB(3))->mul(2);
 
-echo $expr->describe();
+echo $expr->describe() . "\n";
 print_r($expr->collapse());
-echo $expr->asFloat(['RUB' => 1, 'USD' => 63.23]);
+echo $expr->asFloat(['RUB' => 1, 'USD' => 63.23]) . "\n";
