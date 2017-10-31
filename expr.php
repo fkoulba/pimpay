@@ -56,6 +56,14 @@ final class ValueExpression extends Expression {
     $this->code = $code;
   }
 
+  public function getAmount() {
+    return $this->amount;
+  }
+
+  public function getCode() {
+    return $this->code;
+  }
+
   public function describe() {
     return $this->amount . $this->code;
   }
@@ -66,23 +74,29 @@ final class ValueExpression extends Expression {
 }
 
 final class AddExpression extends Expression {
-  private $value1;
-  private $value2;
+  private $term1;
+  private $term2;
 
-  public function __construct(Expression $value1, Expression $value2) {
-    $this->value1 = $value1;
-    $this->value2 = $value2;
+  public function __construct(Expression $term1, Expression $term2) {
+    $this->term1 = $term1;
+    $this->term2 = $term2;
+  }
+
+  public function getTerm1() {
+    return $this->term1;
+  }
+
+  public function getTerm2() {
+    return $this->term2;
   }
 
   public function describe() {
-    return $this->value1 . ' + ' . $this->value2;
+    return $this->term1 . ' + ' . $this->term2;
   }
 
   public function collapse() {
-    $collapsedValue1 = $this->value1->collapse();
-    $collapsedValue2 = $this->value2->collapse();
-    $collapsedResult = $collapsedValue1;
-    foreach ($collapsedValue2 as $code => $amount) {
+    $collapsedResult = $this->term1->collapse();
+    foreach ($this->term2->collapse() as $code => $amount) {
       if (isset($collapsedResult[$code])) {
         $collapsedResult[$code] += $amount;
       } else {
@@ -94,23 +108,29 @@ final class AddExpression extends Expression {
 }
 
 final class SubExpression extends Expression {
-  private $value1;
-  private $value2;
+  private $subtrahend;
+  private $minuend;
 
-  public function __construct(Expression $value1, Expression $value2) {
-    $this->value1 = $value1;
-    $this->value2 = $value2;
+  public function __construct(Expression $subtrahend, Expression $minuend) {
+    $this->subtrahend = $subtrahend;
+    $this->minuend = $minuend;
+  }
+
+  public function getSubtrahend() {
+    return $this->subtrahend;
+  }
+
+  public function getMinuend() {
+    return $this->minuend;
   }
 
   public function describe() {
-    return $this->value1 . ' - ' . $this->value2;
+    return $this->subtrahend . ' - ' . $this->minuend;
   }
 
   public function collapse() {
-    $collapsedValue1 = $this->value1->collapse();
-    $collapsedValue2 = $this->value2->collapse();
-    $collapsedResult = $collapsedValue1;
-    foreach ($collapsedValue2 as $code => $amount) {
+    $collapsedResult = $this->subtrahend->collapse();
+    foreach ($this->minuend->collapse() as $code => $amount) {
       if (isset($collapsedResult[$code])) {
         $collapsedResult[$code] -= $amount;
       } else {
@@ -122,44 +142,60 @@ final class SubExpression extends Expression {
 }
 
 final class MulExpression extends Expression {
-  private $value1;
-  private $value2;
+  private $term1;
+  private $term2;
 
-  public function __construct(Expression $value1, float $value2) {
-    $this->value1 = $value1;
-    $this->value2 = $value2;
+  public function __construct(Expression $term1, float $term2) {
+    $this->term1 = $term1;
+    $this->term2 = $term2;
+  }
+
+  public function getTerm1() {
+    return $this->term1;
+  }
+
+  public function getTerm2() {
+    return $this->term2;
   }
 
   public function describe() {
-    return '(' . $this->value1 . ') * ' . $this->value2;
+    return '(' . $this->term1 . ') * ' . $this->term2;
   }
 
   public function collapse() {
-    $collapsedResult = $this->value1->collapse();
+    $collapsedResult = $this->term1->collapse();
     foreach ($collapsedResult as $code => $amount) {
-      $collapsedResult[$code] = $amount * $this->value2;
+      $collapsedResult[$code] = $amount * $this->term2;
     }
     return $collapsedResult;
   }
 }
 
 final class DivExpression extends Expression {
-  private $value1;
-  private $value2;
+  private $dividend;
+  private $divisor;
 
-  public function __construct(Expression $value1, float $value2) {
-    $this->value1 = $value1;
-    $this->value2 = $value2;
+  public function __construct(Expression $dividend, float $divisor) {
+    $this->dividend = $dividend;
+    $this->divisor = $divisor;
+  }
+
+  public function getDividend() {
+    return $this->dividend;
+  }
+
+  public function getDivisor() {
+    return $this->divisor;
   }
 
   public function describe() {
-    return '(' . $this->value1 . ') / ' . $this->value2;
+    return '(' . $this->dividend . ') / ' . $this->divisor;
   }
 
   public function collapse() {
-    $collapsedResult = $this->value1->collapse();
+    $collapsedResult = $this->dividend->collapse();
     foreach ($collapsedResult as $code => $amount) {
-      $collapsedResult[$code] = $amount / $this->value2;
+      $collapsedResult[$code] = $amount / $this->divisor;
     }
     return $collapsedResult;
   }
