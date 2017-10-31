@@ -204,3 +204,56 @@ HAVING
   ) != 0
 ORDER BY
   customer_portfolio DESC;
+
+
+-- Вариант с GROUP BY и оконными функциями
+SELECT
+  c.tin AS customer_tin,
+  SUM(
+    (
+      CASE
+        WHEN t.type IN ('loan', 'interest') THEN 1
+        WHEN t.type IN ('loan_repayment', 'interest_repayment') THEN -1
+        ELSE 0
+      END
+    ) * t.amount
+  ) AS customer_portfolio,
+  ROUND(
+    SUM(
+      (
+        CASE
+          WHEN t.type IN ('loan', 'interest') THEN 1
+          WHEN t.type IN ('loan_repayment', 'interest_repayment') THEN -1
+          ELSE 0
+        END
+      ) * t.amount
+    ) / SUM(
+      SUM(
+        (
+          CASE
+            WHEN t.type IN ('loan', 'interest') THEN 1
+            WHEN t.type IN ('loan_repayment', 'interest_repayment') THEN -1
+            ELSE 0
+          END
+        ) * t.amount
+      )
+    ) OVER () * 100,
+    2
+  ) AS percent_of_total_portfolio
+FROM
+  tbl_customer AS c
+  INNER JOIN tbl_loan_transaction AS t ON t.customer_id = c.id
+GROUP BY
+  c.tin
+HAVING
+  SUM(
+    (
+      CASE
+        WHEN t.type IN ('loan', 'interest') THEN 1
+        WHEN t.type IN ('loan_repayment', 'interest_repayment') THEN -1
+        ELSE 0
+      END
+    ) * t.amount
+  ) != 0
+ORDER BY
+  customer_portfolio DESC;
