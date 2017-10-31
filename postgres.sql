@@ -25,7 +25,7 @@ INSERT INTO tbl_loan_transaction (customer_id, type, amount) VALUES (6718, 'loan
 
 -- Вариант с GROUP BY - нет возможности выдать долю от общего кредитного портфеля
 SELECT
-  c.tin,
+  c.tin AS customer_tin,
   SUM(
     (
       CASE
@@ -55,7 +55,7 @@ ORDER BY
 
 -- Вариант с оконными функциями - нет возможности отфильтровать по нулевым портфелям
 SELECT DISTINCT
-  c.tin,
+  c.tin AS customer_tin,
   SUM(
     (
       CASE
@@ -92,5 +92,56 @@ SELECT DISTINCT
 FROM
   tbl_customer AS c
   INNER JOIN tbl_loan_transaction AS t ON t.customer_id = c.id
+ORDER BY
+  customer_portfolio DESC;
+
+-- Вариант с подзапросом с оконными функциями
+SELECT
+  customer_tin,
+  customer_portfolio,
+  percent_of_total_portfolio
+FROM
+  (
+    SELECT DISTINCT
+      c.tin AS customer_tin,
+      SUM(
+        (
+          CASE
+            WHEN t.type IN ('loan', 'interest') THEN 1
+            WHEN t.type IN ('loan_repayment', 'interest_repayment') THEN -1
+            ELSE 0
+          END
+        ) * t.amount
+      ) OVER (PARTITION BY t.customer_id) AS customer_portfolio,
+      ROUND(
+        (
+          SUM(
+            (
+              CASE
+                WHEN t.type IN ('loan', 'interest') THEN 1
+                WHEN t.type IN ('loan_repayment', 'interest_repayment') THEN -1
+                ELSE 0
+              END
+            ) * t.amount
+          ) OVER (PARTITION BY t.customer_id)
+        ) / (
+          SUM(
+            (
+              CASE
+                WHEN t.type IN ('loan', 'interest') THEN 1
+                WHEN t.type IN ('loan_repayment', 'interest_repayment') THEN -1
+                ELSE 0
+              END
+            ) * t.amount
+          ) OVER ()
+        ) * 100,
+        2
+      ) AS percent_of_total_portfolio
+    FROM
+      tbl_customer AS c
+      INNER JOIN tbl_loan_transaction AS t ON t.customer_id = c.id
+  ) AS customer_portfolio_query
+WHERE
+  customer_portfolio != 0
 ORDER BY
   customer_portfolio DESC;
