@@ -47,7 +47,7 @@ abstract class Expression {
   }
 }
 
-class ValueExpression extends Expression {
+final class ValueExpression extends Expression {
   private $amount;
   private $code;
 
@@ -178,5 +178,7 @@ function USD($value) {
 $expr = (RUB(10)->mul(5)->add(USD(5))->sub(RUB(3)))->mul(2);
 
 echo $expr->describe() . "\n";
+
 print_r($expr->collapse());
+
 echo $expr->asFloat(['RUB' => 1, 'USD' => 63.23]) . "\n";
