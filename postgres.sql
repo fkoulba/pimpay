@@ -23,6 +23,37 @@ INSERT INTO tbl_loan_transaction (customer_id, type, amount) VALUES (4456, 'loan
 INSERT INTO tbl_loan_transaction (customer_id, type, amount) VALUES (6718, 'loan', 4200.00);
 INSERT INTO tbl_loan_transaction (customer_id, type, amount) VALUES (6718, 'loan_repayment', 4200.00);
 
+-- Вариант с GROUP BY - нет возможности выдать долю от общего кредитного портфеля
+SELECT
+  c.tin,
+  SUM(
+    (
+      CASE
+        WHEN t.type IN ('loan', 'interest') THEN 1
+        WHEN t.type IN ('loan_repayment', 'interest_repayment') THEN -1
+        ELSE 0
+      END
+    ) * t.amount
+  ) AS customer_portfolio
+FROM
+  tbl_customer AS c
+  INNER JOIN tbl_loan_transaction AS t ON t.customer_id = c.id
+GROUP BY
+  c.tin
+HAVING
+  SUM(
+    (
+      CASE
+        WHEN t.type IN ('loan', 'interest') THEN 1
+        WHEN t.type IN ('loan_repayment', 'interest_repayment') THEN -1
+        ELSE 0
+      END
+    ) * t.amount
+  ) != 0
+ORDER BY
+  customer_portfolio DESC;
+
+-- Вариант с оконными функциями - нет возможности отфильтровать по нулевым портфелям
 SELECT DISTINCT
   c.tin,
   SUM(
